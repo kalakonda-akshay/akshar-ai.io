@@ -548,6 +548,17 @@ Be accurate, use technical language, and format clearly.`;
   }
 });
 
+// ── LOG ACTIVITY (CALLED BY LOCAL CLIENTS) ────────────────────────────────────
+app.post('/log-activity', async (req, res) => {
+  try {
+    const { username, action, ip, details } = req.body;
+    await db.logActivity(username, action, ip || req.ip, details);
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 // ── GET LOGS (ADMIN ONLY) ─────────────────────────────────────────────────────
 app.post('/logs', async (req, res) => {
   try {

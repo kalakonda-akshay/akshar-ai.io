@@ -4,13 +4,15 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const axios = require('axios');
 
 // File paths for local fallback database
 const USERS_FILE = path.join(__dirname, 'users.json');
 const LOGS_FILE = path.join(__dirname, 'logs.json');
 
-// MONGODB CONNECTION
+// MONGODB CONNECTION & REMOTE CONFIG
 const mongoUri = process.env.MONGODB_URI;
+const REMOTE_API = 'https://akshar-ai-io.vercel.app';
 let isMongo = false;
 
 if (mongoUri) {
@@ -25,7 +27,7 @@ if (mongoUri) {
       isMongo = false;
     });
 } else {
-  console.log('ℹ️ No MONGODB_URI environment variable found. Using local JSON files.');
+  console.log('ℹ️ Local Mode: Forwarding auth and logging to remote server:', REMOTE_API);
 }
 
 // ── MONGO SCHEMAS & MODELS ────────────────────────────────────────────────────
@@ -52,65 +54,23 @@ const logSchema = new mongoose.Schema({
 const MongoUser = mongoose.models.User || mongoose.model('User', userSchema);
 const MongoLog = mongoose.models.Log || mongoose.model('Log', logSchema);
 
-// ── BUILT-IN USERS (PLAINTEXT IN CODE, SECURED ON VERIFICATION) ─────────────────
+// ── BUILT-IN USERS ─────────────────────────────────────────────────────────────
 const builtInUsers = {
   student: { password: 'pass123',  name: 'Alex Kumar',  role: 'B.Tech Student', branch: 'CSE', college: 'Anna University', year: '3rd Year', avatar: '👨‍🎓' },
   admin:   { password: 'admin123', name: 'Admin User',  role: 'Administrator',  branch: '',    college: '',                year: '',         avatar: '👨‍💻' },
   demo:    { password: 'demo',     name: 'Demo User',   role: 'B.Tech Student', branch: 'IT',  college: 'VTU',             year: '2nd Year', avatar: '🎓'  }
 };
 
-// ── HELPER FUNCTIONS FOR LOCAL JSON DB ──────────────────────────────────────────
-function readLocalUsers() {
-  if (!fs.existsSync(USERS_FILE)) {
-    // Write empty users file
-    fs.writeFileSync(USERS_FILE, JSON.stringify({}, null, 2));
-    return {};
-  }
-  try {
-    const raw = fs.readFileSync(USERS_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Error reading local users.json:', e.message);
-    return {};
-  }
-}
-
-function writeLocalUsers(users) {
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-  } catch (e) {
-    console.error('Error writing local users.json:', e.message);
-  }
-}
-
-function writeLocalLog(logEntry) {
-  try {
-    let logs = [];
-    if (fs.existsSync(LOGS_FILE)) {
-      try {
-        logs = JSON.parse(fs.readFileSync(LOGS_FILE, 'utf-8'));
-        if (!Array.isArray(logs)) logs = [];
-      } catch {}
-    }
-    logs.push(logEntry);
-    // Limit to last 5000 logs locally
-    if (logs.length > 5000) logs.shift();
-    fs.writeFileSync(LOGS_FILE, JSON.stringify(logs, null, 2));
-  } catch (e) {
-    console.error('Error writing local logs.json:', e.message);
-  }
-}
-
 // ── EXPORTED DATABASE INTERFACE ─────────────────────────────────────────────────
 module.exports = {
-  // Save a new user (with hashed password)
+  // Save a new user
   async registerUser(userData) {
-    const { username, password, name, role, branch, college, year, avatar } = userData;
-    const cleanUsername = username.toLowerCase().trim();
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    // If running in cloud (Vercel)
+    if (mongoUri && isMongo) {
+      const { username, password, name, role, branch, college, year, avatar } = userData;
+      const cleanUsername = username.toLowerCase().trim();
+      const hashedPassword = bcrypt.hashSync(password, 10);
 
-    if (isMongo) {
-      // Check if user exists
       const existing = await MongoUser.findOne({ username: cleanUsername });
       if (existing) {
         throw new Error('Username already taken.');
@@ -127,22 +87,19 @@ module.exports = {
       });
       await user.save();
       return { username: cleanUsername, name: user.name };
-    } else {
-      const users = readLocalUsers();
-      if (users[cleanUsername] || builtInUsers[cleanUsername]) {
-        throw new Error('Username already taken.');
+    } 
+    // If running locally in Electron (forward to Vercel API)
+    else {
+      try {
+        const response = await axios.post(`${REMOTE_API}/register`, userData);
+        if (response.data && response.data.ok) {
+          return response.data;
+        } else {
+          throw new Error(response.data.error || 'Registration failed');
+        }
+      } catch (err) {
+        throw new Error(err.response?.data?.error || err.message);
       }
-      users[cleanUsername] = {
-        password: hashedPassword,
-        name: name.trim(),
-        role: role || 'B.Tech Student',
-        branch: branch || '',
-        college: college || '',
-        year: year || '',
-        avatar: avatar || '👨‍🎓'
-      };
-      writeLocalUsers(users);
-      return { username: cleanUsername, name: users[cleanUsername].name };
     }
   },
 
@@ -150,8 +107,8 @@ module.exports = {
   async loginUser(username, password) {
     const cleanUsername = username.toLowerCase().trim();
 
-    // Check MongoDB first if connected
-    if (isMongo) {
+    // If running in cloud (Vercel)
+    if (mongoUri && isMongo) {
       const user = await MongoUser.findOne({ username: cleanUsername });
       if (user) {
         const match = bcrypt.compareSync(password, user.password);
@@ -167,47 +124,27 @@ module.exports = {
           };
         }
       }
-    } else {
-      // Check Local File Users
-      const users = readLocalUsers();
-      const user = users[cleanUsername];
-      if (user) {
-        // Support legacy plaintext passwords in users.json or hashed passwords
-        let match = false;
-        if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
-          match = bcrypt.compareSync(password, user.password);
+
+      // Check built-in users on cloud fallback
+      const builtIn = builtInUsers[cleanUsername];
+      if (builtIn && password === builtIn.password) {
+        return { username: cleanUsername, ...builtIn };
+      }
+      throw new Error('Wrong username or password');
+    } 
+    // If running locally in Electron (forward to Vercel API)
+    else {
+      try {
+        const response = await axios.post(`${REMOTE_API}/login`, { username, password });
+        if (response.data && response.data.ok) {
+          return response.data.user;
         } else {
-          // If plaintext, match directly and upgrade password to hash
-          match = (password === user.password);
-          if (match) {
-            user.password = bcrypt.hashSync(password, 10);
-            writeLocalUsers(users);
-          }
+          throw new Error(response.data.error || 'Login failed');
         }
-        if (match) {
-          return {
-            username: cleanUsername,
-            name: user.name,
-            role: user.role,
-            branch: user.branch,
-            college: user.college,
-            year: user.year,
-            avatar: user.avatar
-          };
-        }
+      } catch (err) {
+        throw new Error(err.response?.data?.error || err.message);
       }
     }
-
-    // Fallback to built-in users (if not matched or not found in DB)
-    const builtIn = builtInUsers[cleanUsername];
-    if (builtIn && password === builtIn.password) {
-      return {
-        username: cleanUsername,
-        ...builtIn
-      };
-    }
-
-    throw new Error('Wrong username or password');
   },
 
   // Log user activity
@@ -221,29 +158,41 @@ module.exports = {
       timestamp: new Date()
     };
 
-    if (isMongo && mongoose.connection.readyState === 1) {
+    // If running in cloud (Vercel)
+    if (mongoUri && isMongo) {
       try {
         const log = new MongoLog(logEntry);
         await log.save();
       } catch (e) {
-        console.error('Failed to save log to MongoDB, saving locally:', e.message);
-        writeLocalLog(logEntry);
+        console.error('Failed to save log to MongoDB:', e.message);
       }
-    } else {
-      writeLocalLog(logEntry);
+    } 
+    // If running locally in Electron (forward to Vercel API)
+    else {
+      try {
+        await axios.post(`${REMOTE_API}/log-activity`, logEntry);
+      } catch (e) {
+        console.error('Failed to forward log to Vercel API:', e.message);
+      }
     }
   },
 
-  // Get active logs (for analytics/admin tracking)
+  // Get active logs
   async getLogs(limit = 100) {
-    if (isMongo) {
+    // If running in cloud (Vercel)
+    if (mongoUri && isMongo) {
       return await MongoLog.find().sort({ timestamp: -1 }).limit(limit);
-    } else {
-      if (!fs.existsSync(LOGS_FILE)) return [];
+    } 
+    // If running locally in Electron (forward to Vercel API)
+    else {
       try {
-        const logs = JSON.parse(fs.readFileSync(LOGS_FILE, 'utf-8'));
-        return Array.isArray(logs) ? logs.reverse().slice(0, limit) : [];
-      } catch {
+        const response = await axios.post(`${REMOTE_API}/logs`, { username: 'admin' });
+        if (response.data && response.data.ok) {
+          return response.data.logs;
+        }
+        return [];
+      } catch (err) {
+        console.error('Failed to retrieve logs from Vercel API:', err.message);
         return [];
       }
     }
