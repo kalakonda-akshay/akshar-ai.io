@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"><title>Akshar.ai</title>
 <link rel="stylesheet" href="../styles/global.css">
+<script src="../js/web-fallback.js"></script>
 <style>
 body{overflow:hidden;display:flex;flex-direction:column;height:100vh;}
 .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.25;animation:flt 9s ease-in-out infinite;}
@@ -90,7 +91,6 @@ body{overflow:hidden;display:flex;flex-direction:column;height:100vh;}
         <div class="ic-wrap"><span class="ic">🔒</span><input id="lp" type="password" class="inp" placeholder="Enter your password"></div>
       </div>
       <button class="btn btn-p" id="login-btn" onclick="doLogin()" style="width:100%;padding:13px;font-size:14px">Sign In →</button>
-      <div class="demo">Demo: <code>student</code> / <code>pass123</code> &nbsp;·&nbsp; <code>admin</code> / <code>admin123</code></div>
     </div>
 
     <!-- REGISTER PANE -->
@@ -113,10 +113,25 @@ body{overflow:hidden;display:flex;flex-direction:column;height:100vh;}
       </div>
       <div class="frow">
         <div class="fg2"><label>Password *</label><input id="rpass" type="password" class="inp" placeholder="Min 4 chars"></div>
-        <div class="fg2"><label>Year</label><input id="ryear" class="inp" placeholder="e.g. 3rd Year"></div>
+        <div class="fg2">
+          <label>Semester *</label>
+          <select id="rsemester" class="inp" style="background:var(--b2);border:1px solid var(--bdr);height:40px;color:var(--t1)">
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+          </select>
+        </div>
       </div>
       <div class="frow">
-        <div class="fg2"><label>Branch</label><input id="rbranch" class="inp" placeholder="CSE, ECE, IT..."></div>
+        <div class="fg2">
+          <label>Branch *</label>
+          <select id="rbranch" class="inp" style="background:var(--b2);border:1px solid var(--bdr);height:40px;color:var(--t1)">
+            <option value="CSE">CSE (Computer Science)</option>
+            <option value="AIDS">AI & DS (Artificial Intelligence & Data Science)</option>
+            <option value="General">Other / General</option>
+          </select>
+        </div>
         <div class="fg2"><label>College</label><input id="rcollege" class="inp" placeholder="Your college"></div>
       </div>
 
@@ -131,7 +146,7 @@ body{overflow:hidden;display:flex;flex-direction:column;height:100vh;}
 <div id="toasts"></div>
 
 <script>
-const { ipcRenderer } = require('electron');
+const ipcRenderer = window.ipcRenderer;
 let PORT = 52700;
 let selAv = '👨‍🎓';
 
@@ -171,7 +186,10 @@ document.addEventListener('keydown', e => {
 
 async function callBackend(endpoint, body) {
   try {
-    const r = await fetch(`http://127.0.0.1:${PORT}/${endpoint}`, {
+    const baseUrl = window.ipcRenderer && window.ipcRenderer.isElectron
+      ? `http://127.0.0.1:${PORT}`
+      : window.location.origin;
+    const r = await fetch(`${baseUrl}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -203,12 +221,12 @@ async function doLogin() {
 }
 
 async function doRegister() {
-  const name    = document.getElementById('rname').value.trim();
-  const username= document.getElementById('ruser').value.trim();
-  const password= document.getElementById('rpass').value;
-  const year    = document.getElementById('ryear').value.trim();
-  const branch  = document.getElementById('rbranch').value.trim();
-  const college = document.getElementById('rcollege').value.trim();
+  const name     = document.getElementById('rname').value.trim();
+  const username = document.getElementById('ruser').value.trim();
+  const password = document.getElementById('rpass').value;
+  const semester = document.getElementById('rsemester').value;
+  const branch   = document.getElementById('rbranch').value;
+  const college  = document.getElementById('rcollege').value.trim();
 
   if (!name || !username || !password) { showMsg('rerr', 'Name, username and password are required'); return; }
   if (password.length < 4) { showMsg('rerr', 'Password must be at least 4 characters'); return; }
@@ -217,7 +235,7 @@ async function doRegister() {
   const btn = document.getElementById('reg-btn');
   btn.innerHTML = '<span class="spin spin-sm"></span> Creating...'; btn.disabled = true;
 
-  const data = await callBackend('register', { username, password, name, role: 'B.Tech Student', year, branch, college, avatar: selAv });
+  const data = await callBackend('register', { username, password, name, role: 'B.Tech Student', year: semester, branch, college, avatar: selAv });
 
   if (data.ok) {
     document.getElementById('rerr').classList.remove('show');

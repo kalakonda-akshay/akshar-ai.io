@@ -54,11 +54,8 @@ const logSchema = new mongoose.Schema({
 const MongoUser = mongoose.models.User || mongoose.model('User', userSchema);
 const MongoLog = mongoose.models.Log || mongoose.model('Log', logSchema);
 
-// ── BUILT-IN USERS ─────────────────────────────────────────────────────────────
 const builtInUsers = {
-  student: { password: 'pass123',  name: 'Alex Kumar',  role: 'B.Tech Student', branch: 'CSE', college: 'Anna University', year: '3rd Year', avatar: '👨‍🎓' },
-  admin:   { password: 'admin123', name: 'Admin User',  role: 'Administrator',  branch: '',    college: '',                year: '',         avatar: '👨‍💻' },
-  demo:    { password: 'demo',     name: 'Demo User',   role: 'B.Tech Student', branch: 'IT',  college: 'VTU',             year: '2nd Year', avatar: '🎓'  }
+  akshay: { password: 'RAM@6002', name: 'Akshay', role: 'Administrator', branch: 'CSE', college: 'Amrita', year: '4', avatar: '👨‍💻' }
 };
 
 // ── EXPORTED DATABASE INTERFACE ─────────────────────────────────────────────────
@@ -89,17 +86,23 @@ module.exports = {
       return { username: cleanUsername, name: user.name };
     } 
     // If running locally in Electron (forward to Vercel API)
-    else {
+    else if (!mongoUri) {
       try {
         const response = await axios.post(`${REMOTE_API}/register`, userData);
         if (response.data && response.data.ok) {
           return response.data;
         } else {
-          throw new Error(response.data.error || 'Registration failed');
+          let errMsg = response.data.error;
+          if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+          throw new Error(errMsg || 'Registration failed');
         }
       } catch (err) {
-        throw new Error(err.response?.data?.error || err.message);
+        let errMsg = err.response?.data?.error || err.message;
+        if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+        throw new Error(errMsg);
       }
+    } else {
+      throw new Error('Database connection is currently unavailable.');
     }
   },
 
@@ -107,7 +110,13 @@ module.exports = {
   async loginUser(username, password) {
     const cleanUsername = username.toLowerCase().trim();
 
-    // If running in cloud (Vercel)
+    // Check built-in users first so they always work offline/locally
+    const builtIn = builtInUsers[cleanUsername];
+    if (builtIn && password === builtIn.password) {
+      return { username: cleanUsername, ...builtIn };
+    }
+
+    // If running in cloud (Vercel) with active Mongo database
     if (mongoUri && isMongo) {
       const user = await MongoUser.findOne({ username: cleanUsername });
       if (user) {
@@ -124,26 +133,26 @@ module.exports = {
           };
         }
       }
-
-      // Check built-in users on cloud fallback
-      const builtIn = builtInUsers[cleanUsername];
-      if (builtIn && password === builtIn.password) {
-        return { username: cleanUsername, ...builtIn };
-      }
       throw new Error('Wrong username or password');
     } 
     // If running locally in Electron (forward to Vercel API)
-    else {
+    else if (!mongoUri) {
       try {
         const response = await axios.post(`${REMOTE_API}/login`, { username, password });
         if (response.data && response.data.ok) {
           return response.data.user;
         } else {
-          throw new Error(response.data.error || 'Login failed');
+          let errMsg = response.data.error;
+          if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+          throw new Error(errMsg || 'Login failed');
         }
       } catch (err) {
-        throw new Error(err.response?.data?.error || err.message);
+        let errMsg = err.response?.data?.error || err.message;
+        if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+        throw new Error(errMsg);
       }
+    } else {
+      throw new Error('Database connection is currently unavailable.');
     }
   },
 
@@ -168,7 +177,7 @@ module.exports = {
       }
     } 
     // If running locally in Electron (forward to Vercel API)
-    else {
+    else if (!mongoUri) {
       try {
         await axios.post(`${REMOTE_API}/log-activity`, logEntry);
       } catch (e) {
@@ -184,7 +193,7 @@ module.exports = {
       return await MongoLog.find().sort({ timestamp: -1 }).limit(limit);
     } 
     // If running locally in Electron (forward to Vercel API)
-    else {
+    else if (!mongoUri) {
       try {
         const response = await axios.post(`${REMOTE_API}/logs`, { username: 'admin' });
         if (response.data && response.data.ok) {
@@ -196,5 +205,6 @@ module.exports = {
         return [];
       }
     }
+    return [];
   }
 };

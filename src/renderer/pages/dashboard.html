@@ -3,43 +3,45 @@
 <head>
 <meta charset="UTF-8"><title>Akshar.ai</title>
 <link rel="stylesheet" href="../styles/global.css">
+<script src="../js/web-fallback.js"></script>
 <style>
 body{overflow:hidden;}
 .layout{display:flex;height:100vh;padding-top:42px;}
-.sb{width:230px;min-width:230px;background:rgba(7,7,15,.98);border-right:1px solid var(--bdr);display:flex;flex-direction:column;padding:13px 0;z-index:10;overflow-y:auto;}
+.sb{width:230px;min-width:230px;background:linear-gradient(to bottom, #050510, #020207);border-right:1px solid var(--bdr);display:flex;flex-direction:column;padding:13px 0;z-index:10;overflow-y:auto;}
 .sb-user{padding:0 11px 13px;border-bottom:1px solid var(--bdr);margin-bottom:8px;}
 .sb-uc{display:flex;align-items:center;gap:9px;padding:9px 10px;background:var(--glass);border-radius:var(--r2);border:1px solid var(--bdr);cursor:pointer;transition:var(--tr);}
-.sb-uc:hover{background:var(--glass2);border-color:rgba(124,111,255,.3);}
+.sb-uc:hover{background:var(--glass2);border-color:rgba(109,93,252,.35);transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,0.4);}
 .sb-av{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--cyan));border-radius:var(--r1);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.sb-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-role{font-size:11px;color:var(--t3);}
-.sb-sec{font-size:9px;font-weight:700;color:var(--t4);letter-spacing:1.5px;text-transform:uppercase;padding:7px 15px 3px;}
-.nav{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:2px 7px;border-radius:var(--r2);cursor:pointer;transition:var(--trf);font-size:13px;font-weight:500;color:var(--t2);border:1px solid transparent;}
-.nav:hover{background:var(--glass2);color:var(--t1);}
-.nav.on{background:var(--pg);color:var(--p2);border-color:var(--pd);}
+.sb-sec{font-size:9px;font-weight:800;color:var(--t4);letter-spacing:1.8px;text-transform:uppercase;padding:7px 15px 3px;}
+.nav{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:2px 7px;border-radius:var(--r2);cursor:pointer;transition:var(--tr);font-size:13px;font-weight:600;color:var(--t2);border-left:3px solid transparent;}
+.nav:hover{background:var(--glass2);color:var(--t1);border-left-color:var(--bdr2);padding-left:14px;}
+.nav.on{background:linear-gradient(90deg,var(--pg),transparent);color:#fff;border-left-color:var(--p);box-shadow:inset 4px 0 12px rgba(109,93,252,.05);padding-left:14px;}
 .nav-ic{font-size:15px;width:19px;text-align:center;flex-shrink:0;}
 .nav-tag{margin-left:auto;background:var(--p);color:#fff;font-size:9px;padding:2px 6px;border-radius:20px;}
 .sb-foot{margin-top:auto;padding:11px;border-top:1px solid var(--bdr);}
 .main{flex:1;overflow:hidden;background:var(--bg0);position:relative;}
-.main::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(124,111,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(124,111,255,.02) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
-.view{display:none;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:26px 28px;animation:vIn .3s ease;z-index:1;}
+.main::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(109,93,252,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(109,93,252,.015) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+.view{display:none;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:26px 28px;animation:vIn .35s cubic-bezier(0.25, 0.8, 0.25, 1);z-index:1;}
 .view.on{display:block;}
 #v-chat{display:none;position:absolute;inset:0;flex-direction:column;z-index:1;}
 #v-chat.on{display:flex;}
 .ph{margin-bottom:22px;}
-.pt{font-family:var(--fd);font-size:22px;font-weight:700;margin-bottom:3px;background:linear-gradient(135deg,#fff,rgba(255,255,255,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.pt{font-family:var(--fd);font-size:22px;font-weight:800;margin-bottom:3px;background:linear-gradient(135deg,#fff,rgba(243,243,251,.45));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .ps{font-size:13px;color:var(--t3);}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px;}
-.stat{padding:15px;border-radius:var(--r3);}
-.s1{background:linear-gradient(135deg,rgba(124,111,255,.17),rgba(124,111,255,.05));border:1px solid rgba(124,111,255,.22);}
-.s2{background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(34,211,238,.04));border:1px solid rgba(34,211,238,.2);}
-.s3{background:linear-gradient(135deg,rgba(52,211,153,.13),rgba(52,211,153,.04));border:1px solid rgba(52,211,153,.2);}
-.s4{background:linear-gradient(135deg,rgba(251,191,36,.13),rgba(251,191,36,.04));border:1px solid rgba(251,191,36,.2);}
-.si{font-size:22px;margin-bottom:6px;}.sv{font-family:var(--fd);font-size:22px;font-weight:700;margin-bottom:2px;}.sl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;}
+.stat{padding:15px;border-radius:var(--r3);transition:var(--tr);backdrop-filter:blur(10px);}
+.stat:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.s1{background:linear-gradient(135deg,rgba(109,93,252,.12),rgba(109,93,252,.03));border:1px solid rgba(109,93,252,.18);}
+.s2{background:linear-gradient(135deg,rgba(0,240,255,.09),rgba(0,240,255,.02));border:1px solid rgba(0,240,255,.15);}
+.s3{background:linear-gradient(135deg,rgba(0,255,170,.09),rgba(0,255,170,.02));border:1px solid rgba(0,255,170,.15);}
+.s4{background:linear-gradient(135deg,rgba(255,215,0,.09),rgba(255,215,0,.02));border:1px solid rgba(255,215,0,.15);}
+.si{font-size:22px;margin-bottom:6px;}.sv{font-family:var(--fd);font-size:22px;font-weight:700;margin-bottom:2px;}.sl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;}
 .fg{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
-.fc{padding:19px;border-radius:var(--r3);background:var(--glass);border:1px solid var(--bdr);cursor:pointer;transition:var(--tr);position:relative;overflow:hidden;}
+.fc{padding:19px;border-radius:var(--r3);background:var(--glass);border:1px solid var(--bdr);cursor:pointer;transition:var(--tr);position:relative;overflow:hidden;backdrop-filter:blur(15px);}
 .fc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .3s;}
-.fc:hover{transform:translateY(-3px);border-color:var(--bdr2);box-shadow:var(--sh);}
+.fc:hover{transform:translateY(-5px) scale(1.02);border-color:var(--bdr2);box-shadow:0 15px 36px rgba(0,0,0,0.55),0 0 20px rgba(109,93,252,0.12);}
 .fc:hover::after{opacity:1;}
 .fc.p::after{background:linear-gradient(90deg,var(--p),var(--cyan));}
 .fc.c::after{background:linear-gradient(90deg,var(--cyan),var(--green));}
@@ -190,15 +192,27 @@ body{overflow:hidden;}
         <div><label class="lbl" id="t-days-lbl2">Days until exam</label><input id="pl-days" class="inp" type="number" min="1" max="90" placeholder="e.g. 14"></div>
         <div><label class="lbl" id="t-hrs-lbl">Study hours/day</label><input id="pl-hrs" class="inp" type="number" value="8" min="2" max="16"></div>
       </div>
-      <label class="lbl" id="t-subs-lbl">Select Subjects</label>
-      <div class="pills" id="pl-pills">
-        <span class="pill on" data-s="Linear Algebra">📐 Linear Algebra</span>
-        <span class="pill on" data-s="Discrete Mathematics">🔢 Discrete Math</span>
-        <span class="pill on" data-s="UID">🎨 UID</span>
-        <span class="pill on" data-s="Modern Physics">⚛️ Modern Physics</span>
-        <span class="pill on" data-s="ADM">🌲 ADM</span>
-        <span class="pill on" data-s="OOPS">🧬 OOPS</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px">
+        <div>
+          <label class="lbl">Branch</label>
+          <select id="pl-branch" class="inp" onchange="syncSyllabusFilters('planner')" style="background:var(--glass);border:1px solid var(--bdr);height:40px;color:var(--t1);border-radius:var(--r1)">
+            <option value="CSE">CSE</option>
+            <option value="AIDS">AI & DS</option>
+            <option value="General">Other / General</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Semester</label>
+          <select id="pl-semester" class="inp" onchange="syncSyllabusFilters('planner')" style="background:var(--glass);border:1px solid var(--bdr);height:40px;color:var(--t1);border-radius:var(--r1)">
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+          </select>
+        </div>
       </div>
+      <label class="lbl" id="t-subs-lbl">Select Subjects</label>
+      <div class="pills" id="pl-pills"></div>
       <button class="btn btn-p" id="pl-btn" onclick="genPlan()" style="width:100%;padding:12px">✨ <span id="t-gen-plan">Generate AI Study Plan</span></button>
     </div>
     <div id="pl-out"></div>
@@ -209,19 +223,31 @@ body{overflow:hidden;}
 <div class="view" id="v-quiz">
   <div id="q-home">
     <div class="ph"><div class="pt">🧠 <span id="t-quiz-title">Quiz Arena</span></div><div class="ps" id="t-quiz-sub">25 MCQs · 30 second timer · AI-generated questions</div></div>
+    <div class="sc" style="max-width:640px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="lbl">Branch</label>
+          <select id="q-branch" class="inp" onchange="syncSyllabusFilters('quiz')" style="background:var(--glass);border:1px solid var(--bdr);height:40px;color:var(--t1);border-radius:var(--r1)">
+            <option value="CSE">CSE</option>
+            <option value="AIDS">AI & DS</option>
+            <option value="General">Other / General</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Semester</label>
+          <select id="q-semester" class="inp" onchange="syncSyllabusFilters('quiz')" style="background:var(--glass);border:1px solid var(--bdr);height:40px;color:var(--t1);border-radius:var(--r1)">
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+          </select>
+        </div>
+    </div>
     <div class="sc" style="max-width:640px;margin-bottom:18px">
       <div class="sh" style="font-size:13px">📝 <span id="t-custom-q-title">Add Your Own Questions (Optional)</span></div>
       <p style="font-size:12px;color:var(--t3);margin-bottom:9px" id="t-custom-q-desc">Type your questions below — AI converts them into a proper quiz. Leave empty for auto-generated questions.</p>
       <textarea id="custom-q" class="inp" rows="3" placeholder="1. What is polymorphism?&#10;2. Explain inheritance...&#10;...any format works!"></textarea>
     </div>
-    <div class="fg" style="max-width:640px">
-      <div class="fc p" onclick="startQ('Linear Algebra')"><div style="font-size:28px;margin-bottom:8px">📐</div><div class="ft">Linear Algebra</div><div class="fd2">Matrices, eigenvalues, vectors</div><div class="ftag"><span class="badge badge-p">Start →</span></div></div>
-      <div class="fc c" onclick="startQ('Discrete Mathematics')"><div style="font-size:28px;margin-bottom:8px">🔢</div><div class="ft">Discrete Math</div><div class="fd2">Logic, sets, graphs, combinations</div><div class="ftag"><span class="badge badge-cyan">Start →</span></div></div>
-      <div class="fc g" onclick="startQ('UID')"><div style="font-size:28px;margin-bottom:8px">🎨</div><div class="ft">UID</div><div class="fd2">UI/UX design principles</div><div class="ftag"><span class="badge badge-green">Start →</span></div></div>
-      <div class="fc a" onclick="startQ('Modern Physics')"><div style="font-size:28px;margin-bottom:8px">⚛️</div><div class="ft">Modern Physics</div><div class="fd2">Quantum, semiconductors</div><div class="ftag"><span class="badge badge-amber">Start →</span></div></div>
-      <div class="fc p" onclick="startQ('ADM')"><div style="font-size:28px;margin-bottom:8px">🌲</div><div class="ft">ADM</div><div class="fd2">Algorithms, complexity, trees</div><div class="ftag"><span class="badge badge-p">Start →</span></div></div>
-      <div class="fc c" onclick="startQ('OOPS')"><div style="font-size:28px;margin-bottom:8px">🧬</div><div class="ft">OOPS</div><div class="fd2">OOP concepts, Java/C++</div><div class="ftag"><span class="badge badge-cyan">Start →</span></div></div>
-    </div>
+    <div class="fg" id="quiz-grid" style="max-width:640px"></div>
   </div>
   <div id="q-active" style="display:none"></div>
 </div>
@@ -346,6 +372,52 @@ body{overflow:hidden;}
 
       <div id="test-out" style="margin-top:7px;font-size:12px;white-space:pre-wrap;word-break:break-all"></div>
       <div id="debug-out" style="margin-top:10px;font-size:11px;color:var(--t3);background:var(--glass);padding:10px;border-radius:var(--r2);display:none;font-family:var(--fm);white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto"></div>
+    </div>
+
+    <div class="sc">
+      <div class="sh">🌐 <span id="t-cloud-title">Cloud AI (API Key Required)</span></div>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:11px">
+        Use a cloud LLM provider to power the application. Works instantly on any device.
+      </p>
+
+      <label class="lbl">API Provider</label>
+      <select id="cloud-provider-inp" class="inp" style="margin-bottom:10px" onchange="onCloudProviderChange()">
+        <option value="openai">OpenAI (api.openai.com)</option>
+        <option value="openrouter">OpenRouter (openrouter.ai)</option>
+        <option value="groq">Groq (api.groq.com)</option>
+        <option value="gemini">Gemini API (generativeai.googleapis.com)</option>
+        <option value="custom">Custom API URL</option>
+      </select>
+
+      <div id="cloud-custom-url-container" style="display:none;margin-bottom:10px">
+        <label class="lbl">Custom Base URL</label>
+        <input id="cloud-url-inp" class="inp" type="text" placeholder="https://api.example.com/v1" autocomplete="off">
+      </div>
+
+      <div style="display:none">
+        <!-- Hidden URL store for standard providers -->
+        <input id="cloud-url-hidden" class="inp" type="text">
+      </div>
+
+      <label class="lbl">API Key</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="cloud-key-inp" class="inp" type="password" placeholder="Paste your API key here" autocomplete="off">
+      </div>
+
+      <label class="lbl">Model Name</label>
+      <div style="display:flex;gap:8px;margin-bottom:7px">
+        <input id="cloud-model-inp" class="inp" type="text" placeholder="e.g. gpt-4o-mini" autocomplete="off">
+        <button class="btn btn-p" onclick="saveCloudConfig()">💾 Save</button>
+      </div>
+
+      <div id="cloud-key-status" style="font-size:12px;color:var(--t3);margin-bottom:9px"></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn btn-s btn-sm" onclick="testCloudConnection()" id="test-cloud-btn">🔍 Test Connection</button>
+        <button class="btn btn-g btn-sm" onclick="clearCloudConfig()">🗑 Clear Config</button>
+      </div>
+
+      <div id="cloud-test-out" style="margin-top:7px;font-size:12px;white-space:pre-wrap;word-break:break-all"></div>
     </div>
 
     <div class="sc">
@@ -588,7 +660,7 @@ body{overflow:hidden;}
 
 <script>
 'use strict';
-const { ipcRenderer } = require('electron');
+const ipcRenderer = window.ipcRenderer;
 const db = {
   set: (k,v) => ipcRenderer.invoke('db-set',{key:k,val:v}),
   get: (k,d) => ipcRenderer.invoke('db-get',k).then(r => r !== null && r !== undefined ? r : (d !== undefined ? d : null))
@@ -846,9 +918,16 @@ async function api(endpoint, body) {
   try {
     const enrichedBody = {
       ...body,
-      username: G.user ? G.user.username : 'anonymous'
+      username: G.user ? G.user.username : 'anonymous',
+      cloudKey: G.cloudKey || '',
+      cloudUrl: G.cloudUrl || '',
+      cloudModel: G.cloudModel || '',
+      cloudProvider: G.cloudProvider || ''
     };
-    const r = await fetch(`http://127.0.0.1:${PORT}/${endpoint}`, {
+    const baseUrl = window.ipcRenderer && window.ipcRenderer.isElectron
+      ? `http://127.0.0.1:${PORT}`
+      : window.location.origin;
+    const r = await fetch(`${baseUrl}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(enrichedBody)
@@ -870,6 +949,11 @@ async function boot() {
   G.ollamaModel = await db.get('ollamaModel', '');
   G.appLang = await db.get('appLang', 'en');
 
+  G.cloudKey      = await db.get('cloudKey', '');
+  G.cloudUrl      = await db.get('cloudUrl', '');
+  G.cloudModel    = await db.get('cloudModel', '');
+  G.cloudProvider = await db.get('cloudProvider', 'openai');
+
   const days  = await db.get('examDays', null);
   const stats = await db.get('quizStats', { count: 0, best: 0 });
 
@@ -881,6 +965,17 @@ async function boot() {
     document.getElementById('api-banner').style.display = 'none';
   } else {
     document.getElementById('api-banner').style.display = 'flex';
+  }
+
+  // Restore Cloud config UI
+  document.getElementById('cloud-provider-inp').value = G.cloudProvider;
+  document.getElementById('cloud-key-inp').value      = G.cloudKey;
+  document.getElementById('cloud-url-inp').value      = G.cloudUrl;
+  document.getElementById('cloud-model-inp').value    = G.cloudModel;
+  onCloudProviderChange();
+  if (G.cloudKey) {
+    document.getElementById('cloud-key-status').textContent = '✅ Cloud AI Active (Model: ' + (G.cloudModel || 'default') + ')';
+    document.getElementById('api-banner').style.display = 'none';
   }
 
   // Exam days
@@ -901,9 +996,20 @@ async function boot() {
   const greet = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
   document.getElementById('greet').textContent = `${greet}, ${G.user.name || G.user.username}! 👋`;
 
+  // Set default filters based on user's registered Branch and Semester (year)
+  const defaultBranch = G.user.branch === 'AIDS' || G.user.branch === 'CSE' ? G.user.branch : 'CSE';
+  const defaultSemester = ['1', '2', '3', '4'].includes(G.user.year) ? G.user.year : '1';
+
+  document.getElementById('pl-branch').value = defaultBranch;
+  document.getElementById('q-branch').value = defaultBranch;
+  document.getElementById('pl-semester').value = defaultSemester;
+  document.getElementById('q-semester').value = defaultSemester;
+
+  // Render the default branch and semester subjects
+  renderSyllabus();
+
   refreshSidebar();
   await loadRes();
-  document.querySelectorAll('#pl-pills .pill').forEach(p => p.addEventListener('click', () => p.classList.toggle('on')));
 
   // Apply saved language
   if (G.appLang && G.appLang !== 'en') {
@@ -972,6 +1078,134 @@ async function saveOllamaConfig() {
   toast('Ollama config saved — model: ' + model, 's');
 }
 
+function onCloudProviderChange() {
+  const provider = document.getElementById('cloud-provider-inp').value;
+  const urlInp = document.getElementById('cloud-url-inp');
+  const modelInp = document.getElementById('cloud-model-inp');
+  const customContainer = document.getElementById('cloud-custom-url-container');
+
+  if (provider === 'custom') {
+    customContainer.style.display = 'block';
+  } else {
+    customContainer.style.display = 'none';
+  }
+
+  // Set defaults based on provider selection
+  if (provider === 'openai') {
+    urlInp.value = 'https://api.openai.com/v1';
+    modelInp.placeholder = 'e.g. gpt-4o-mini';
+    if (!modelInp.value || modelInp.value.startsWith('gemini') || modelInp.value.startsWith('meta-') || modelInp.value.startsWith('llama3')) {
+      modelInp.value = 'gpt-4o-mini';
+    }
+  } else if (provider === 'openrouter') {
+    urlInp.value = 'https://openrouter.ai/api/v1';
+    modelInp.placeholder = 'e.g. meta-llama/llama-3-8b-instruct';
+    if (!modelInp.value || modelInp.value.startsWith('gpt') || modelInp.value.startsWith('gemini') || modelInp.value.startsWith('llama3')) {
+      modelInp.value = 'meta-llama/llama-3-8b-instruct';
+    }
+  } else if (provider === 'groq') {
+    urlInp.value = 'https://api.groq.com/openai/v1';
+    modelInp.placeholder = 'e.g. llama-3.1-8b-instant';
+    if (!modelInp.value || modelInp.value.startsWith('gpt') || modelInp.value.startsWith('gemini') || modelInp.value.startsWith('meta-')) {
+      modelInp.value = 'llama-3.1-8b-instant';
+    }
+  } else if (provider === 'gemini') {
+    urlInp.value = 'https://generativeai.googleapis.com/v1beta/openai';
+    modelInp.placeholder = 'e.g. gemini-1.5-flash';
+    if (!modelInp.value || modelInp.value.startsWith('gpt') || modelInp.value.startsWith('meta-') || modelInp.value.startsWith('llama3')) {
+      modelInp.value = 'gemini-1.5-flash';
+    }
+  } else if (provider === 'custom') {
+    urlInp.value = '';
+    urlInp.placeholder = 'https://api.yourprovider.com/v1';
+  }
+}
+
+async function saveCloudConfig() {
+  const provider = document.getElementById('cloud-provider-inp').value;
+  const key      = document.getElementById('cloud-key-inp').value.trim();
+  const url      = document.getElementById('cloud-url-inp').value.trim();
+  const model    = document.getElementById('cloud-model-inp').value.trim();
+
+  if (!key) {
+    toast('API Key is required to enable Cloud AI', 'e');
+    return;
+  }
+
+  G.cloudKey = key;
+  G.cloudUrl = url;
+  G.cloudModel = model;
+  G.cloudProvider = provider;
+
+  await db.set('cloudKey', key);
+  await db.set('cloudUrl', url);
+  await db.set('cloudModel', model);
+  await db.set('cloudProvider', provider);
+
+  document.getElementById('cloud-key-status').textContent = '✅ Cloud AI Active (Model: ' + (model || 'default') + ')';
+  document.getElementById('api-banner').style.display = 'none';
+
+  toast('Cloud AI config saved!', 's');
+}
+
+async function clearCloudConfig() {
+  G.cloudKey = '';
+  G.cloudUrl = '';
+  G.cloudModel = '';
+  G.cloudProvider = 'openai';
+
+  await db.set('cloudKey', '');
+  await db.set('cloudUrl', '');
+  await db.set('cloudModel', '');
+  await db.set('cloudProvider', 'openai');
+
+  document.getElementById('cloud-key-inp').value = '';
+  document.getElementById('cloud-url-inp').value = 'https://api.openai.com/v1';
+  document.getElementById('cloud-model-inp').value = 'gpt-4o-mini';
+  document.getElementById('cloud-provider-inp').value = 'openai';
+  document.getElementById('cloud-key-status').textContent = '';
+  onCloudProviderChange();
+
+  if (!G.ollamaModel) {
+    document.getElementById('api-banner').style.display = 'flex';
+  }
+
+  toast('Cloud AI config cleared.', 'i');
+}
+
+async function testCloudConnection() {
+  const provider = document.getElementById('cloud-provider-inp').value;
+  const key      = document.getElementById('cloud-key-inp').value.trim();
+  const url      = document.getElementById('cloud-url-inp').value.trim();
+  const model    = document.getElementById('cloud-model-inp').value.trim();
+  const dbg      = document.getElementById('cloud-test-out');
+
+  if (!key) {
+    toast('Enter an API Key to test.', 'e');
+    return;
+  }
+
+  dbg.textContent = 'Testing Cloud API connection...\n';
+  dbg.style.color = 'var(--t2)';
+
+  try {
+    const r = await api('test-cloud', { cloudKey: key, cloudUrl: url, cloudModel: model });
+    if (r.ok) {
+      dbg.textContent = r.message;
+      dbg.style.color = 'var(--green)';
+      toast('Cloud connection test succeeded! ✅', 's');
+    } else {
+      dbg.textContent = '❌ Error: ' + r.error;
+      dbg.style.color = 'var(--rose)';
+      toast('Cloud connection test failed.', 'e');
+    }
+  } catch(e) {
+    dbg.textContent = '❌ Connection failed: ' + e.message;
+    dbg.style.color = 'var(--rose)';
+    toast('Cloud connection failed.', 'e');
+  }
+}
+
 async function refreshOllamaModels() {
   const url = document.getElementById('ollama-url-inp').value.trim() || 'http://localhost:11434';
   const btn = document.getElementById('refresh-models-btn');
@@ -1005,15 +1239,18 @@ async function refreshOllamaModels() {
 async function checkBackendStatus() {
   const dbg = document.getElementById('debug-out');
   dbg.style.display = 'block'; dbg.style.color = 'var(--t3)';
-  dbg.textContent = 'Checking backend on port ' + PORT + '...\n';
+  const baseUrl = window.ipcRenderer && window.ipcRenderer.isElectron
+    ? `http://127.0.0.1:${PORT}`
+    : window.location.origin;
+  dbg.textContent = 'Checking backend status...\n';
   try {
-    const r = await fetch('http://127.0.0.1:' + PORT + '/health');
+    const r = await fetch(baseUrl + '/health');
     const d = await r.json();
     dbg.style.color = 'var(--green)';
-    dbg.textContent = '✅ Backend running on port ' + PORT + '\n' + JSON.stringify(d);
+    dbg.textContent = '✅ Backend running successfully!\n' + JSON.stringify(d);
   } catch(e) {
     dbg.style.color = 'var(--rose)';
-    dbg.textContent = '❌ Backend NOT reachable\nError: ' + e.message + '\n\nFIX: Run: npm start';
+    dbg.textContent = '❌ Backend NOT reachable\nError: ' + e.message;
   }
 }
 
@@ -1027,18 +1264,21 @@ async function testOllama() {
   out.textContent = ''; dbg.style.display = 'block'; dbg.style.color = 'var(--t3)';
   dbg.textContent = '--- OLLAMA TEST ---\nURL: ' + url + '\nModel: ' + model + '\n\n';
   btn.innerHTML = '<span class="spin spin-sm"></span> Testing...'; btn.disabled = true;
+  const baseUrl = window.ipcRenderer && window.ipcRenderer.isElectron
+    ? `http://127.0.0.1:${PORT}`
+    : window.location.origin;
   try {
-    await fetch('http://127.0.0.1:' + PORT + '/health');
+    await fetch(baseUrl + '/health');
     dbg.textContent += '✅ Backend online\n';
   } catch(e) {
     dbg.style.color = 'var(--rose)';
-    dbg.textContent += '❌ Backend offline! Run: npm start\n';
+    dbg.textContent += '❌ Backend offline!\n';
     out.style.color = 'var(--rose)'; out.textContent = '❌ Backend not running.';
     btn.innerHTML = '🔍 Test Connection'; btn.disabled = false; return;
   }
   dbg.textContent += 'Connecting to Ollama at ' + url + '...\n';
   try {
-    const r = await fetch('http://127.0.0.1:' + PORT + '/test-key', {
+    const r = await fetch(baseUrl + '/test-key', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ollamaUrl: url, ollamaModel: model })
     });
@@ -1457,7 +1697,7 @@ async function doOCR() {
     if (!window.Tesseract) {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js';
+        s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
         s.onload = res; s.onerror = rej;
         document.head.appendChild(s);
       });
@@ -1479,16 +1719,12 @@ async function doOCR() {
     document.getElementById('ocr-out').style.display = 'block';
     // Now AI-summarize
     btn.innerHTML = '<span class="spin spin-sm"></span> AI Summarizing...';
-    if (G.ollamaModel) {
-      const r = await api('ocr-summarize', { text: ocrRawText, ollamaUrl: G.ollamaUrl, ollamaModel: G.ollamaModel });
-      if (r.ok && r.summary) {
-        document.getElementById('ocr-summary').innerHTML = r.summary.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-        toast('OCR complete! Text extracted and summarized.', 's');
-      } else {
-        document.getElementById('ocr-summary').textContent = 'AI summary unavailable: ' + (r.error || 'unknown error');
-      }
+    const r = await api('ocr-summarize', { text: ocrRawText, ollamaUrl: G.ollamaUrl, ollamaModel: G.ollamaModel });
+    if (r.ok && r.summary) {
+      document.getElementById('ocr-summary').innerHTML = r.summary.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+      toast('OCR complete! Text extracted and summarized.', 's');
     } else {
-      document.getElementById('ocr-summary').innerHTML = '<span style="color:var(--amber)">Configure Ollama in Settings for AI summary.</span>';
+      document.getElementById('ocr-summary').textContent = 'AI summary unavailable: ' + (r.error || 'unknown error');
     }
   } catch(e) {
     toast('OCR failed: ' + e.message, 'e');
@@ -1581,10 +1817,6 @@ async function summarizeVoice() {
   if (!voiceTranscript.trim()) { toast('No transcript to summarize', 'e'); return; }
   const btn = document.getElementById('voice-sum-btn');
   btn.innerHTML = '<span class="spin spin-sm"></span> Summarizing...'; btn.disabled = true;
-  if (!G.ollamaModel) {
-    toast('Configure Ollama in Settings for AI summarization', 'e');
-    btn.innerHTML = '✨ Summarize Notes'; btn.disabled = false; return;
-  }
   const r = await api('voice-summarize', { text: voiceTranscript, ollamaUrl: G.ollamaUrl, ollamaModel: G.ollamaModel });
   if (r.ok && r.notes) {
     document.getElementById('voice-notes-content').innerHTML = r.notes.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/^• /gm,'<span style="color:var(--p2)">•</span> ');
@@ -1616,7 +1848,122 @@ function copyVoiceNotes() {
 // ══════════════════════════════════════════════════════════
 // STUDY ANALYTICS
 // ══════════════════════════════════════════════════════════
-const SUBJECTS = ['Linear Algebra','Discrete Mathematics','UID','Modern Physics','ADM','OOPS'];
+const AMRITA_SYLLABUS = {
+  CSE: {
+    1: [
+      { name: 'Computational Problem Solving', emoji: '💻', desc: 'Foundations of programming, flowcharts, logic', theme: 'p', badge: 'badge-p' },
+      { name: 'Computer Hardware Essentials', emoji: '🔌', desc: 'Motherboards, memory, CPU operations, peripherals', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Calculus', emoji: '📈', desc: 'Limits, derivatives, integrals, series', theme: 'g', badge: 'badge-green' },
+      { name: 'Technical Communication', emoji: '💬', desc: 'Professional writing, presentation, reporting', theme: 'a', badge: 'badge-amber' },
+      { name: 'Electrical Engineering', emoji: '⚡', desc: 'Circuits, basic AC/DC, transformers, motors', theme: 'p', badge: 'badge-p' }
+    ],
+    2: [
+      { name: 'Discrete Mathematics', emoji: '🔢', desc: 'Set theory, logic, graph theory, combinatorics', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Linear Algebra', emoji: '📐', desc: 'Vector spaces, matrices, eigenvalues', theme: 'p', badge: 'badge-p' },
+      { name: 'Object Oriented Programming', emoji: '🧬', desc: 'OOP pillars, classes, polymorphism in Java/C++', theme: 'g', badge: 'badge-green' },
+      { name: 'Modern Physics', emoji: '⚛️', desc: 'Quantum mechanics, wave-particle duality', theme: 'a', badge: 'badge-amber' },
+      { name: 'User Interface Design', emoji: '🎨', desc: 'UI/UX layout guidelines, heuristics, wireframing', theme: 'p', badge: 'badge-p' }
+    ],
+    3: [
+      { name: 'Data Structures & Algorithms', emoji: '🌲', desc: 'Stack, queue, trees, graphs, sorting, searching', theme: 'g', badge: 'badge-green' },
+      { name: 'Database Management Systems', emoji: '🗄️', desc: 'SQL, normalization, transactions, ER diagrams', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Digital Electronics', emoji: '🚥', desc: 'Logic gates, flip-flops, sequential circuits', theme: 'p', badge: 'badge-p' },
+      { name: 'Procedural Programming in C', emoji: '⚙️', desc: 'Pointer manipulation, memory allocation, structures', theme: 'a', badge: 'badge-amber' },
+      { name: 'Optimization Techniques', emoji: '📉', desc: 'Linear programming, simplex method, duality', theme: 'c', badge: 'badge-cyan' }
+    ],
+    4: [
+      { name: 'Operating Systems', emoji: '💻', desc: 'Process management, virtual memory, scheduling', theme: 'p', badge: 'badge-p' },
+      { name: 'Design & Analysis of Algorithms', emoji: '⏱️', desc: 'Asymptotic complexity, DP, greedy method', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Computer Architecture', emoji: '🔌', desc: 'Pipeline design, cache hierarchy, instruction sets', theme: 'g', badge: 'badge-green' },
+      { name: 'Probability & Random Processes', emoji: '📊', desc: 'Bayes theorem, random variables, distributions', theme: 'a', badge: 'badge-amber' }
+    ]
+  },
+  AIDS: {
+    1: [
+      { name: 'Mathematics for Intelligent Systems I', emoji: '📐', desc: 'Linear algebra, vectors, spaces for AI models', theme: 'p', badge: 'badge-p' },
+      { name: 'Computational Mechanics', emoji: '⚙️', desc: 'Kinematics, forces, simulation physics', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Introduction to Data Science', emoji: '📊', desc: 'Data visualization, statistics, analytics tools', theme: 'g', badge: 'badge-green' },
+      { name: 'Technical Communication', emoji: '💬', desc: 'Professional speaking, writing, document editing', theme: 'a', badge: 'badge-amber' }
+    ],
+    2: [
+      { name: 'Mathematics for Intelligent Systems II', emoji: '📈', desc: 'Multivariable calculus, optimization basics', theme: 'p', badge: 'badge-p' },
+      { name: 'Data Structures & Algorithms', emoji: '🌲', desc: 'Trees, lists, searching algorithms, sorting', theme: 'g', badge: 'badge-green' },
+      { name: 'Object Oriented Programming', emoji: '🧬', desc: 'OOP patterns, encapsulation, Java and C++', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Digital Systems', emoji: '🔌', desc: 'Logic gates, binary arithmetic, IC circuits', theme: 'a', badge: 'badge-amber' }
+    ],
+    3: [
+      { name: 'Mathematics for Intelligent Systems III', emoji: '🔢', desc: 'Probability theory, Bayesian statistics', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Machine Learning', emoji: '🤖', desc: 'Supervised models, SVM, decision trees, KNN', theme: 'a', badge: 'badge-amber' },
+      { name: 'Computer Networks', emoji: '🌐', desc: 'Routing, socket connections, TCP/IP, DNS', theme: 'g', badge: 'badge-green' },
+      { name: 'Signals & Systems', emoji: '📡', desc: 'Continuous and discrete signals, transformations', theme: 'p', badge: 'badge-p' }
+    ],
+    4: [
+      { name: 'Mathematics for Intelligent Systems IV', emoji: '🔮', desc: 'Stochastic processes, estimation theory', theme: 'c', badge: 'badge-cyan' },
+      { name: 'Deep Learning', emoji: '🧠', desc: 'Neural nets, backpropagation, CNN, RNN', theme: 'p', badge: 'badge-p' },
+      { name: 'Database Management Systems', emoji: '🗄️', desc: 'Relational databases, SQL queries, normalization', theme: 'g', badge: 'badge-green' },
+      { name: 'Operating Systems', emoji: '💻', desc: 'Concurrency, virtual memory, threads', theme: 'a', badge: 'badge-amber' }
+    ]
+  }
+};
+
+// Flatten to support global database metrics
+const SUBJECTS = [
+  ...new Set(
+    Object.values(AMRITA_SYLLABUS).flatMap(branch => 
+      Object.values(branch).flatMap(sem => sem.map(sub => sub.name))
+    )
+  )
+];
+
+function renderSyllabus() {
+  const branchSelect = document.getElementById('pl-branch');
+  const semSelect    = document.getElementById('pl-semester');
+  if (!branchSelect || !semSelect) return;
+
+  const branch = branchSelect.value;
+  const sem    = semSelect.value;
+
+  // Fallback to CSE / 1 if not defined in map
+  const activeSyllabus = (AMRITA_SYLLABUS[branch] && AMRITA_SYLLABUS[branch][sem])
+    ? AMRITA_SYLLABUS[branch][sem]
+    : AMRITA_SYLLABUS['CSE']['1'];
+
+  // Render Planner Pills
+  const plPills = document.getElementById('pl-pills');
+  if (plPills) {
+    plPills.innerHTML = activeSyllabus.map(s => `
+      <span class="pill on" data-s="${s.name}">${s.emoji} ${s.name}</span>
+    `).join('');
+    // Bind click handlers to newly created pills
+    document.querySelectorAll('#pl-pills .pill').forEach(p => {
+      p.addEventListener('click', () => p.classList.toggle('on'));
+    });
+  }
+
+  // Render Quiz Grid Cards
+  const quizGrid = document.getElementById('quiz-grid');
+  if (quizGrid) {
+    quizGrid.innerHTML = activeSyllabus.map(s => `
+      <div class="fc ${s.theme}" onclick="startQ('${s.name}')">
+        <div style="font-size:28px;margin-bottom:8px">${s.emoji}</div>
+        <div class="ft">${s.name}</div>
+        <div class="fd2">${s.desc}</div>
+        <div class="ftag"><span class="badge ${s.badge}">Start →</span></div>
+      </div>
+    `).join('');
+  }
+}
+
+function syncSyllabusFilters(source) {
+  if (source === 'planner') {
+    document.getElementById('q-branch').value = document.getElementById('pl-branch').value;
+    document.getElementById('q-semester').value = document.getElementById('pl-semester').value;
+  } else {
+    document.getElementById('pl-branch').value = document.getElementById('q-branch').value;
+    document.getElementById('pl-semester').value = document.getElementById('q-semester').value;
+  }
+  renderSyllabus();
+}
 
 async function loadAnalytics() {
   const allScores   = await db.get('subjectScores', {});

@@ -16,13 +16,70 @@ app.use(cors({ origin: '*' }));
 app.use(bp.json({ limit: '50mb' }));
 app.use(bp.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../src/renderer')));
+
+// Root route redirects to static login page so relative paths resolve correctly
+app.get('/', (req, res) => {
+  res.redirect('/pages/login.html');
+});
+
+// Redirect routes for dashboard access to point to correct static folder location
+app.get('/dashboard', (req, res) => {
+  res.redirect('/pages/dashboard.html');
+});
+app.get('/dashboard.html', (req, res) => {
+  res.redirect('/pages/dashboard.html');
+});
+
 // ══════════════════════════════════════════════════════════════
 // OLLAMA — local AI
 // ══════════════════════════════════════════════════════════════
+function callPollinationsAI(prompt, maxTokens = 2000) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    });
+
+    const options = {
+      hostname: 'text.pollinations.ai',
+      port: 443,
+      path: '/',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+
+    let raw = '';
+    const req = https.request(options, res => {
+      res.setEncoding('utf8');
+      res.on('data', chunk => { raw += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(raw.trim());
+        } else {
+          reject(new Error(`Pollinations API returned status ${res.statusCode}`));
+        }
+      });
+    });
+    
+    req.on('error', e => reject(new Error('Pollinations AI connection failed: ' + e.message)));
+    req.setTimeout(60000, () => { req.destroy(); reject(new Error('Pollinations AI timeout (60s).')); });
+    req.write(body);
+    req.end();
+  });
+}
+
 function callOllama(prompt, model = 'llama3', ollamaUrl = 'http://127.0.0.1:11434', maxTokens = 2000) {
   return new Promise((resolve, reject) => {
+    let isDefaultUrl = (ollamaUrl === 'http://127.0.0.1:11434' || !ollamaUrl);
+
     let base;
-    try { base = new URL(ollamaUrl); } catch { base = new URL('http://127.0.0.1:11434'); }
+    try { base = new URL(ollamaUrl || 'http://127.0.0.1:11434'); } catch { base = new URL('http://127.0.0.1:11434'); }
 
     const body = JSON.stringify({
       model,
@@ -48,19 +105,128 @@ function callOllama(prompt, model = 'llama3', ollamaUrl = 'http://127.0.0.1:1143
       res.on('end', () => {
         try {
           const parsed = JSON.parse(raw);
-          if (parsed.error) return reject(new Error('Ollama error: ' + parsed.error));
+          if (parsed.error) {
+            if (isDefaultUrl) {
+              console.log('Ollama error, falling back to Pollinations AI...');
+              return callPollinationsAI(prompt, maxTokens).then(resolve).catch(reject);
+            }
+            return reject(new Error('Ollama error: ' + parsed.error));
+          }
           if (parsed.response) return resolve(parsed.response.trim());
-          reject(new Error('No response from Ollama. Raw: ' + raw.slice(0, 300)));
+          if (isDefaultUrl) {
+            console.log('Ollama empty response, falling back to Pollinations AI...');
+            return callPollinationsAI(prompt, maxTokens).then(resolve).catch(reject);
+          }
+          reject(new Error('No response from Ollama.'));
         } catch (e) {
-          reject(new Error('Parse error: ' + raw.slice(0, 300)));
+          if (isDefaultUrl) {
+            console.log('Ollama parse error, falling back to Pollinations AI...');
+            return callPollinationsAI(prompt, maxTokens).then(resolve).catch(reject);
+          }
+          reject(new Error('Parse error.'));
         }
       });
     });
-    req.on('error', e => reject(new Error('Ollama connection failed: ' + e.message + ' — Is Ollama running? Run: ollama serve')));
-    req.setTimeout(180000, () => { req.destroy(); reject(new Error('Ollama timeout (180s). Model may still be loading.')); });
+    
+    req.on('error', e => {
+      if (isDefaultUrl) {
+        console.log('Ollama connection failed, falling back to Pollinations AI...');
+        return callPollinationsAI(prompt, maxTokens).then(resolve).catch(reject);
+      }
+      reject(new Error('Ollama connection failed: ' + e.message));
+    });
+    
+    req.setTimeout(8000, () => {
+      req.destroy();
+      if (isDefaultUrl) {
+        console.log('Ollama timeout, falling back to Pollinations AI...');
+        return callPollinationsAI(prompt, maxTokens).then(resolve).catch(reject);
+      }
+      reject(new Error('Ollama timeout.'));
+    });
+    
     req.write(body);
     req.end();
   });
+}
+
+function callCloudAI(prompt, cloudKey, cloudUrl, cloudModel, maxTokens = 2000) {
+  return new Promise((resolve, reject) => {
+    let baseUrl = (cloudUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
+    
+    const body = JSON.stringify({
+      model: cloudModel || 'gpt-4o-mini',
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: maxTokens
+    });
+
+    let url;
+    try {
+      url = new URL(baseUrl + '/chat/completions');
+    } catch (e) {
+      return reject(new Error('Invalid Custom API URL: ' + baseUrl));
+    }
+
+    const isHttps = url.protocol === 'https:';
+    const lib     = isHttps ? https : http;
+    const options = {
+      hostname: url.hostname,
+      port:     url.port || (isHttps ? 443 : 80),
+      path:     url.pathname + url.search,
+      method:   'POST',
+      headers:  {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        'Authorization': `Bearer ${cloudKey}`
+      }
+    };
+
+    let raw = '';
+    const req = lib.request(options, res => {
+      res.setEncoding('utf8');
+      res.on('data', chunk => { raw += chunk; });
+      res.on('end', () => {
+        console.log("DEBUG [callCloudAI]: Status =", res.statusCode, "Raw response length =", raw.length);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) {
+              resolve(parsed.choices[0].message.content.trim());
+            } else {
+              reject(new Error('Unexpected response format from Cloud API.'));
+            }
+          } catch (e) {
+            reject(new Error('Cloud API parse error.'));
+          }
+        } else {
+          reject(new Error(`Cloud API returned status ${res.statusCode}`));
+        }
+      });
+    });
+    
+    req.on('error', e => reject(new Error('Cloud API connection failed: ' + e.message)));
+    req.setTimeout(60000, () => { req.destroy(); reject(new Error('Cloud API timeout (60s).')); });
+    req.write(body);
+    req.end();
+  });
+}
+
+async function getAIResponse(req, prompt, maxTokens = 2000) {
+  const { cloudKey, cloudUrl, cloudModel } = req.body;
+  const finalKey = cloudKey || process.env.CLOUD_API_KEY;
+  const finalUrl = cloudUrl || process.env.CLOUD_API_URL;
+  const finalModel = cloudModel || process.env.CLOUD_API_MODEL;
+
+  if (finalKey) {
+    console.log('Routing request through Cloud API...');
+    return await callCloudAI(prompt, finalKey, finalUrl, finalModel, maxTokens);
+  }
+  const { ollamaUrl, ollamaModel } = req.body;
+  const url   = ollamaUrl   || 'http://127.0.0.1:11434';
+  const model = ollamaModel || 'llama3';
+  return await callOllama(prompt, model, url, maxTokens);
 }
 
 function listOllamaModels(ollamaUrl = 'http://127.0.0.1:11434') {
@@ -149,6 +315,21 @@ app.post('/test-key', async (req, res) => {
   }
 });
 
+app.post('/test-cloud', async (req, res) => {
+  const { cloudKey, cloudUrl, cloudModel } = req.body;
+  const finalKey = cloudKey || process.env.CLOUD_API_KEY;
+  const finalUrl = cloudUrl || process.env.CLOUD_API_URL;
+  const finalModel = cloudModel || process.env.CLOUD_API_MODEL;
+
+  if (!finalKey) return res.json({ ok: false, error: 'API Key is empty.' });
+  try {
+    const result = await callCloudAI('Reply with exactly one word: WORKS', finalKey, finalUrl, finalModel, 10);
+    res.json({ ok: true, message: `✅ Cloud AI is working! Response: ${result}` });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 // ── REGISTER ──────────────────────────────────────────────────────────────────
 app.post('/register', async (req, res) => {
   try {
@@ -200,10 +381,9 @@ ${langLine}
 # Mandatory Subject Context
 When the user mentions these acronyms, use ONLY these definitions:
 1. UID (User Interface Design): Focus ONLY on UI/UX, Design Thinking, Wireframing, and Usability. NO connection to UIDAI or Aadhaar.
-2. ADM (Glimpses of Glorious India): This is a History and Culture subject. Focus on Ancient Indian Heritage, Architecture, and Civilization. Do NOT treat it as a technical subject.
 
 # Core Rules
-- Answer ONLY B.Tech academic questions related to: Linear Algebra, Discrete Mathematics, UID, Modern Physics, ADM, OOPS.
+- Answer ONLY B.Tech academic questions related to CSE and AIDS subjects: Linear Algebra, Discrete Mathematics, Data Structures & Algorithms, Object Oriented Programming, Operating Systems, Database Management Systems, Computer Networks, Computer Architecture, Theory of Computation, Compiler Design, Software Engineering, Machine Learning, Deep Learning, Artificial Intelligence, NLP, Data Science, Design & Analysis of Algorithms, Optimization Techniques.
 - If asked about unrelated topics, reply: "I can only assist with B.Tech academic subjects on Akshar.ai."
 - Be accurate. Do NOT hallucinate facts, definitions, or examples.
 - Use bullet points and numbered steps for clarity. Bold key terms with **.
@@ -221,7 +401,7 @@ Student's question: ${lastQuestion}
 Your answer:`;
 
   try {
-    const reply = await callOllama(prompt, model, url, 800);
+    const reply = await getAIResponse(req, prompt, 800);
     await db.logActivity(username, 'chat', req.ip, { model, language, messageLength: lastQuestion.length });
     res.json({ ok: true, reply });
   } catch (e) {
@@ -236,15 +416,14 @@ app.post('/quiz', async (req, res) => {
   const url   = ollamaUrl   || 'http://127.0.0.1:11434';
   const model = ollamaModel || 'llama3';
 
-  if (!ollamaModel) {
-    await db.logActivity(username, 'quiz', req.ip, { subject, source: 'fallback' });
-    return res.json({ ok: true, data: buildFallbackQuiz(subject), source: 'fallback' });
-  }
+
 
   // Ask for 5 questions at a time to reduce JSON errors, then repeat
   const prompt = `You are a B.Tech quiz generator. Generate exactly 10 multiple choice questions about "${subject}".
 
 Respond with ONLY a JSON array. No explanation, no markdown, no extra text. Start your response with [ and end with ].
+
+Important: Keep all question texts, options, and explanations extremely short (1 sentence max) to prevent token length errors.
 
 Format:
 [
@@ -253,7 +432,7 @@ Format:
 ]`;
 
   try {
-    const raw       = await callOllama(prompt, model, url, 3000);
+    const raw       = await getAIResponse(req, prompt, 3000);
     const parsed    = extractJSON(raw);
     const questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
     if (!questions.length) throw new Error('No questions in response');
@@ -305,15 +484,7 @@ app.post('/summarize', async (req, res) => {
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
   const snippet   = text.substring(0, 4000); // keep shorter for better JSON compliance
 
-  if (!ollamaModel) {
-    await db.logActivity(username, 'summarize', req.ip, { fileName, fileExt, wordCount, source: 'fallback' });
-    return res.json({ ok: true, fallback: true, data: {
-      title: fileName, word_count: wordCount,
-      summary: `"${fileName}" loaded (${wordCount} words). Configure Ollama in Settings for AI summary.`,
-      key_points: ['File uploaded', `${wordCount} words`, 'Set model in Settings'],
-      important_concepts: [], exam_tips: ['Read carefully', 'Make notes']
-    }});
-  }
+
 
   // Two-step approach: first get plain text summary, then structure it
   const prompt = `You are Akshar.ai, a B.Tech academic tutor. Read this document and respond with ONLY a JSON object. No explanation before or after. Start your response with { and end with }.
@@ -336,7 +507,7 @@ JSON format (fill in real content from the document):
 }`;
 
   try {
-    const raw  = await callOllama(prompt, model, url, 1500);
+    const raw  = await getAIResponse(req, prompt, 1500);
     const data = extractJSON(raw);
     data.word_count = wordCount;
 
@@ -370,14 +541,13 @@ app.post('/planner', async (req, res) => {
   const url   = ollamaUrl   || 'http://127.0.0.1:11434';
   const model = ollamaModel || 'llama3';
 
-  if (!ollamaModel) {
-    await db.logActivity(username, 'planner', req.ip, { days, subjects, source: 'fallback' });
-    return res.json({ ok: true, data: buildFallbackPlan(days, subjects), source: 'fallback', fallback: true });
-  }
+
 
   const prompt = `Create a ${days}-day B.Tech exam study plan for these subjects: ${subjects.join(', ')}.
 
 Respond with ONLY a JSON object. No explanation. Start with { and end with }.
+
+Important: Keep all topic lists and tips extremely short (1-2 words max) to prevent token length and rate limit errors. Do not write long sentences.
 
 {
   "summary": "brief overview of the plan",
@@ -398,7 +568,7 @@ Respond with ONLY a JSON object. No explanation. Start with { and end with }.
 }`;
 
   try {
-    const raw  = await callOllama(prompt, model, url, 3000);
+    const raw  = await getAIResponse(req, prompt, 3000);
     const data = extractJSON(raw);
     if (!data.plan || !data.plan.length) throw new Error('No plan in response');
     await db.logActivity(username, 'planner', req.ip, { days, subjects, source: 'ollama' });
@@ -455,22 +625,59 @@ function buildFallbackQuiz(subject) {
       {q:'Pigeonhole: n+1 items in n boxes means:',o:{A:'All equal',B:'One box has 2+ items',C:'Impossible',D:'None'},a:'B',e:'At least one box must contain 2 or more items.'},
       {q:"Set A's complement contains:",o:{A:'All of A',B:'Elements NOT in A',C:'Subset of A',D:'Empty set'},a:'B',e:"A' = elements in universal set not in A."}
     ],
-    'Modern Physics':[
-      {q:"Planck's constant h = ?",o:{A:'6.626×10⁻³⁴ J·s',B:'3×10⁸ m/s',C:'9.1×10⁻³¹ kg',D:'1.6×10⁻¹⁹ C'},a:'A',e:'h = 6.626×10⁻³⁴ J·s'},
-      {q:'Photoelectric effect proves light is:',o:{A:'Wave',B:'Particle',C:'Neither',D:'Both'},a:'B',e:'Photoelectric effect = particle (photon) nature of light.'},
-      {q:'de Broglie wavelength formula:',o:{A:'λ=h/mv',B:'λ=mv/h',C:'λ=hv',D:'λ=h+mv'},a:'A',e:'λ = h/p = h/(mv)'},
-      {q:'Bohr model: angular momentum is:',o:{A:'Continuous',B:'Quantized: nh/2π',C:'Zero',D:'Random'},a:'B',e:'L = nh/2π, n = principal quantum number.'},
-      {q:'Uncertainty principle relates:',o:{A:'Energy-time',B:'Position-momentum',C:'Mass-velocity',D:'Charge-mass'},a:'B',e:'ΔxΔp ≥ ℏ/2'}
+    'Operating Systems':[
+      {q:'What is a deadlock situation?',o:{A:'Processes waiting infinitely',B:'Memory shortage',C:'CPU overheat',D:'Infinite loop'},a:'A',e:'Deadlock = processes blocked waiting for resources held by each other.'},
+      {q:'Which scheduling is non-preemptive?',o:{A:'Round Robin',B:'FCFS',C:'Shortest Remaining Time',D:'Priority preemptive'},a:'B',e:'FCFS (First-Come First-Served) is strictly non-preemptive.'},
+      {q:'Virtual memory is implemented via:',o:{A:'Paging/Segmentation',B:'Caching',C:'Registers',D:'RAID'},a:'A',e:'Virtual memory maps virtual addresses via demand paging.'},
+      {q:'Thrashing means:',o:{A:'Excessive paging swapping',B:'Hard drive failure',C:'Virus execution',D:'Compiler error'},a:'A',e:'Thrashing = system spends more time swapping pages than executing.'},
+      {q:'Context switching is:',o:{A:'Saving and restoring state',B:'Changing CPU power',C:'Updating BIOS',D:'User login change'},a:'A',e:'Context switch saves state of old process and loads new process state.'}
     ],
-    'UID':[
-      {q:'UX stands for:',o:{A:'User Experience',B:'User Exchange',C:'Unified Experience',D:'Universal Extension'},a:'A',e:'UX = User Experience.'},
-      {q:'Screen color model:',o:{A:'CMYK',B:'RGB',C:'HSL only',D:'Pantone'},a:'B',e:'Screens use RGB additive color model.'},
-      {q:'Wireframe in UI design is:',o:{A:'Final design',B:'Low-fidelity layout',C:'Color palette',D:'Font guide'},a:'B',e:'Wireframe = simple skeletal layout blueprint.'},
-      {q:"Fitts's Law is about:",o:{A:'Color contrast',B:'Time to acquire a target',C:'Font size',D:'Animation speed'},a:'B',e:'Time to reach a target depends on size and distance.'},
-      {q:'UX Persona is:',o:{A:'Real user account',B:'Fictional user archetype',C:'Developer role',D:'Test script'},a:'B',e:'Persona = fictional but realistic user archetype.'}
+    'Database Management Systems':[
+      {q:'SQL stands for:',o:{A:'Simple Query Language',B:'Structured Query Language',C:'Schema Query Language',D:'Sequential Query Language'},a:'B',e:'SQL = Structured Query Language.'},
+      {q:'ACID properties: "A" stands for:',o:{A:'Atomicity',B:'Aggregation',C:'Architecture',D:'Arrays'},a:'A',e:'ACID = Atomicity, Consistency, Isolation, Durability.'},
+      {q:'A Primary Key constraint must be:',o:{A:'Unique and NOT NULL',B:'Unique only',C:'Can be null',D:'None'},a:'A',e:'Primary key uniquely identifies rows and cannot be null.'},
+      {q:'Which NF resolves transitive dependency?',o:{A:'1NF',B:'2NF',C:'3NF',D:'BCNF'},a:'C',e:'3NF removes transitive dependencies (non-key attributes pointing to non-key).'},
+      {q:'SQL clause to filter grouped records:',o:{A:'WHERE',B:'HAVING',C:'GROUP BY',D:'ORDER BY'},a:'B',e:'HAVING filters aggregated groups; WHERE filters individual rows.'}
+    ],
+    'Computer Networks':[
+      {q:'Which layer is responsible for routing?',o:{A:'Physical',B:'Data Link',C:'Network',D:'Transport'},a:'C',e:'Network layer manages routing and packet forwarding.'},
+      {q:'Standard port number for HTTP:',o:{A:'21',B:'80',C:'443',D:'8080'},a:'B',e:'HTTP default port is 80 (HTTPS is 443).'},
+      {q:'Which protocol is connection-oriented?',o:{A:'UDP',B:'IP',C:'TCP',D:'ICMP'},a:'C',e:'TCP provides reliable, connection-oriented data transfer.'},
+      {q:'DNS maps domains to:',o:{A:'MAC addresses',B:'IP addresses',C:'URLs',D:'Nameservers'},a:'B',e:'DNS (Domain Name System) translates hostnames to IP addresses.'},
+      {q:'MAC address length in bits:',o:{A:'32 bits',B:'48 bits',C:'64 bits',D:'128 bits'},a:'B',e:'MAC (Physical) addresses are 48 bits long.'}
+    ],
+    'Machine Learning':[
+      {q:'Supervised learning relies on:',o:{A:'Raw unlabelled data',B:'Labelled target outputs',C:'Reward signals',D:'No data'},a:'B',e:'Supervised learning trains on key-value pairs of inputs and labels.'},
+      {q:'Which is a classification algorithm?',o:{A:'Linear Regression',B:'K-Means',C:'Support Vector Machine',D:'Apriori'},a:'C',e:'SVM is a popular supervised classification classifier.'},
+      {q:'Overfitting is indicated by:',o:{A:'High train, low test score',B:'Low train, high test score',C:'Equal scores',D:'None'},a:'A',e:'Overfitting means model memorized training data, fails to generalize.'},
+      {q:'K-Means is what type of algorithm?',o:{A:'Supervised Classification',B:'Unsupervised Clustering',C:'Reinforcement Learning',D:'Regression'},a:'B',e:'K-Means clusters unlabeled data points into K groups.'},
+      {q:'Technique to prevent overfitting:',o:{A:'Under-sampling',B:'Regularization',C:'Increasing features',D:'None'},a:'B',e:'Regularization penalizes high coefficients, simplifying the model.'}
+    ],
+    'Artificial Intelligence':[
+      {q:'Which search is optimal and complete?',o:{A:'Depth-First Search',B:'Breadth-First Search',C:'A* Search',D:'Hill Climbing'},a:'C',e:'A* search is optimal and complete if heuristic is admissible.'},
+      {q:'Turing Test was designed to measure:',o:{A:'Hardware speed',B:'Machine intelligence',C:'Memory capacity',D:'Network band'},a:'B',e:'Turing Test assesses if a machine can exhibit human-like intelligence.'},
+      {q:'Admissible heuristic means:',o:{A:'Never overestimates cost',B:'Always overestimates cost',C:'Equal to actual cost',D:'None'},a:'A',e:'Admissible heuristic never overestimates the actual cost to reach goal.'},
+      {q:'Expert system consists of:',o:{A:'CPU and RAM',B:'Knowledge Base and Inference Engine',C:'Frontend and Backend',D:'SQL and NoSQL'},a:'B',e:'Expert systems use stored facts (Knowledge Base) and rules (Inference Engine).'},
+      {q:'Constraint Satisfaction Problem example:',o:{A:'Linear regression',B:'N-Queens Puzzle',C:'Sorting arrays',D:'None'},a:'B',e:'N-Queens is a classic CSP where constraints specify valid positions.'}
     ]
   };
-  const pool = Q[subject] || Q['OOPS'];
+
+  const keyMap = {
+    'Linear Algebra': 'Linear Algebra',
+    'Discrete Mathematics': 'Discrete Mathematics',
+    'Data Structures & Algorithms': 'ADM',
+    'Object Oriented Programming': 'OOPS',
+    'Design & Analysis of Algorithms': 'ADM',
+    'Operating Systems': 'Operating Systems',
+    'Database Management Systems': 'Database Management Systems',
+    'Computer Networks': 'Computer Networks',
+    'Machine Learning': 'Machine Learning',
+    'Artificial Intelligence': 'Artificial Intelligence'
+  };
+
+  const activeKey = keyMap[subject] || 'OOPS';
+  const pool = Q[activeKey] || Q['OOPS'];
+
   return { questions: Array.from({ length: 25 }, (_, i) => {
     const s = pool[i % pool.length];
     return { id: i+1, question: s.q, options: s.o, correct: s.a, explanation: s.e };
@@ -499,7 +706,7 @@ Your task:
 
 Be concise and accurate. Format clearly with bullet points.`;
   try {
-    const reply = await callOllama(prompt, model, url, 800);
+    const reply = await getAIResponse(req, prompt, 800);
     await db.logActivity(username, 'ocr_summarize', req.ip, { textLength: text.length });
     res.json({ ok: true, summary: reply });
   } catch(e) {
@@ -539,7 +746,7 @@ Convert this lecture transcript into structured, technical study notes:
 
 Be accurate, use technical language, and format clearly.`;
   try {
-    const notes = await callOllama(prompt, model, url, 1000);
+    const notes = await getAIResponse(req, prompt, 1000);
     await db.logActivity(username, 'voice_summarize', req.ip, { textLength: text.length });
     res.json({ ok: true, notes });
   } catch(e) {
@@ -575,3 +782,5 @@ app.post('/logs', async (req, res) => {
 
 const HOST = process.env.PORT || process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1';
 app.listen(PORT, HOST, () => console.log(`Akshar.ai backend ready on port ${PORT} (host: ${HOST})`));
+
+module.exports = app;
