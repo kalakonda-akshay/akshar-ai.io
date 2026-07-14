@@ -1,154 +1,116 @@
-# 📚 e-Pathasala — Digital Learning Platform for B.Tech Students
+# 📚 Akshar.ai — AI-Powered Academic Intelligence for B.Tech Students
 
-A feature-rich Electron desktop application designed specifically for B.Tech students.
+[![Live Demo](https://img.shields.io/badge/Live-Production%20App-6d5dfc?style=for-the-badge)](https://akshar-ai-rho.vercel.app)
+[![Platform](https://img.shields.io/badge/Platform-Web%20%2F%20Electron-00f0ff?style=for-the-badge)](#)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel%20%26%20MongoDB-00ffaa?style=for-the-badge)](#)
+[![AI Engine](https://img.shields.io/badge/AI-Groq%20Cloud-ffd700?style=for-the-badge)](#)
 
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js v18+ ([download here](https://nodejs.org))
-- npm (included with Node.js)
-- An OpenAI API key (optional but recommended for AI features)
+**Akshar.ai** is a premium, feature-rich academic intelligence portal designed to help engineering students accelerate their learning. It integrates custom curriculum structures, AI-powered study planners, automated mock quizzes, PDF summarizers, voice-note transcribers, and a specialized technical chatbot.
 
 ---
 
-## 📦 Installation
+## 🚀 Quick Start (Production)
 
-```bash
-# Step 1: Navigate to the project folder
-cd e-pathasala
-
-# Step 2: Install all dependencies
-npm install
-
-# Step 3: Start the application
-npm start
-```
-
-> **Note:** `npm start` launches both the Express backend (port 3847) and the Electron app simultaneously.
+Access the live production deployment from any device (Desktop, Laptop, or Mobile):
+👉 **[https://akshar-ai-rho.vercel.app](https://akshar-ai-rho.vercel.app)**
 
 ---
 
-## 🔑 Default Login Credentials
+## 🔑 Default Credentials & Access
 
-| Username | Password   | Role    |
-|----------|-----------|---------|
-| admin    | admin123  | Admin   |
-| student  | pass123   | Student |
-| demo     | demo      | Student |
-
----
-
-## ✨ Features
-
-### 1. 🔐 User Authentication
-- Login with username/password
-- Secure session management via Electron IPC
-
-### 2. 🏠 Dashboard
-- Real-time stats (days to exam, quizzes taken, best score)
-- Quick-access feature cards
-- Dark theme with glassmorphism
-
-### 3. 📅 Exam Planner
-- Enter number of days until exam
-- Select subjects to include
-- AI generates day-wise study plan with sessions, topics, and tips
-
-### 4. 🧠 Quiz Arena
-- 6 subjects: Linear Algebra, Discrete Math, UID, Modern Physics, ADM, OOPS
-- 25 MCQ questions per quiz
-- 30-second countdown timer per question
-- Score tracking and grade calculation
-
-### 5. 📄 PDF Summarizer
-- Upload PDF, DOCX, or TXT files
-- AI extracts key points, important concepts, and exam tips
-- Word count analysis
-
-### 6. 💬 AI Doubt Solver
-- ChatGPT-like interface
-- Full conversation history
-- Quick-question shortcuts
-- Specialized for B.Tech subjects
-
-### 7. 📚 Resource Library
-- Upload and store study materials
-- Supports PDF, DOCX, PPTX, TXT
-- Persistent storage in user data directory
-
-### 8. 🌐 Multi-language Support
-- 8 languages: English, Hindi, Tamil, Telugu, Kannada, Malayalam, Marathi, Bengali
+*   **To explore as an Administrator:**
+    *   **Username:** `AKSHAY`
+    *   **Password:** `RAM@6002`
+*   **To explore as a Student:**
+    *   Click the **Create Account** tab on the login screen.
+    *   Choose your specific **Branch** (CSE or AI&DS) and **Semester** (1–4).
+    *   Create your login, and the dashboard will automatically load your customized Amrita curriculum!
 
 ---
 
-## 🤖 AI Configuration
+## ✨ Primary Features
 
-1. Open the app and log in
-2. Go to **Settings** in the sidebar
-3. Enter your OpenAI API key (starts with `sk-...`)
-4. Click **Save**
+### 🎓 1. Dynamic Amrita Vishwa Vidyapeetham Curricula
+*   **Branch Filtering:** Custom templates for **Computer Science (CSE)** and **Artificial Intelligence & Data Science (AI&DS)**.
+*   **Semester Filtering:** Directly filters course contents across semesters 1, 2, 3, and 4.
+*   **Dynamic Synchronization:** Changing branches or semesters dynamically updates the study plan list and quiz cards across all views.
 
-All AI features will now work:
-- AI-generated study plans
-- Dynamic quiz questions
-- PDF summarization
-- Doubt solving chatbot
+### 📅 2. Exam Planner
+*   Configure days until exams and study hours per day.
+*   AI generates a highly structured, day-wise timeline detailing session goals, recommended reading, and custom learning tips.
 
-**Without API key:** The app uses intelligent fallback responses for all features.
+### 🧠 3. Interactive Quiz Arena
+*   Loads dynamic 25-question MCQ pools tailored to each subject.
+*   Includes a 30-second question timer, instant answer grading, and comprehensive explanation keys for wrong answers.
 
----
+### 📄 4. AI Document Summarizer & OCR
+*   **PDF Summarizer:** Upload textbook PDFs, DOCX, or TXT notes. The AI extracts definitions, core concepts, and potential exam questions.
+*   **OCR Support:** Take snapshots of textbooks/slides and run high-accuracy OCR directly in-app to convert them into summarized study notes.
 
-## 📁 Project Structure
+### 🎤 5. Lecture Voice Notes Summarizer
+*   Record live lectures directly inside the app.
+*   Transcribes spoken English and generates organized summaries.
 
-```
-e-pathasala/
-├── package.json               # Dependencies & scripts
-├── src/
-│   ├── main/
-│   │   └── main.js            # Electron main process
-│   └── renderer/
-│       ├── pages/
-│       │   ├── login.html     # Login screen
-│       │   └── dashboard.html # Main app (all views)
-│       └── styles/
-│           └── global.css     # Shared design system
-├── backend/
-│   └── server.js              # Express API server
-└── README.md
-```
+### 💬 6. Academic Doubt Solver (Chatbot)
+*   Specialized engineering tutor context that answers doubts with clean formatting, equations, and code blocks.
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer        | Technology               |
-|--------------|--------------------------|
-| Desktop      | Electron 28              |
-| Frontend     | HTML5, CSS3, JavaScript  |
-| Backend      | Node.js + Express        |
-| AI           | OpenAI GPT-3.5-turbo     |
-| File Parsing | pdf-parse, mammoth       |
-| HTTP         | axios                    |
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | HTML5, JavaScript (ES6+), Modern Glassmorphic CSS3 |
+| **Backend & Hosting** | Node.js + Express, Deployed Serverless via Vercel Cloud |
+| **Database** | MongoDB Atlas Cloud Database (Mongoose Object Modeling) |
+| **AI Engine** | Groq Cloud Llama-3-70B API |
+| **OCR Process** | Tesseract.js v5 (JS Engine Wrapper) |
+| **Desktop Wrapper** | Electron 28 (configured for production-cloud bridge) |
 
 ---
 
-## 🐛 Troubleshooting
+## 📦 Local Installation (Development)
 
-**App starts but AI features don't work:**
-- Make sure you've added your OpenAI API key in Settings
+To run the application locally on your computer:
 
-**Backend connection error:**
-- The Express server runs on port 3847
-- Make sure no other app is using that port
-- Try running `node backend/server.js` separately
+```bash
+# Clone the repository
+git clone https://github.com/kalakonda-akshay/akshar-ai.io.git
+cd akshar-ai.io
 
-**File upload fails:**
-- Ensure the file is not corrupted
-- Check file size (max 50MB)
+# Install dependencies
+npm install
+
+# Start the local Electron application & Express server
+npm start
+```
+
+> [!NOTE]
+> The app is pre-configured to automatically connect to the Vercel production API when running locally, so you don't need a local MongoDB setup to test client-side features.
 
 ---
 
-## 📝 License
-MIT License — Built for educational purposes
+## 📝 Project Architecture
+
+```
+akshar-ai/
+├── package.json               # Package descriptors & commands
+├── vercel.json                # Vercel Serverless routing config
+├── backend/
+│   ├── server.js              # Express REST API controller
+│   └── database.js            # MongoDB & Mongoose Schemas
+└── src/
+    └── renderer/
+        ├── pages/
+        │   ├── login.html     # Portal Access Screen
+        │   └── dashboard.html # Main Workstation (Single Page Application)
+        ├── styles/
+        │   └── global.css     # Premium UI Design System
+        └── js/
+            └── web-fallback.js# Cross-environment bridge APIs
+```
+
+---
+
+## 📄 License
+Licensed under the **MIT License** — Built for educational enhancement.
