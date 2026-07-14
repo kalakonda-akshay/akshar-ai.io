@@ -1,5 +1,11 @@
 'use strict';
 
+// Polyfill globalThis.crypto for bcryptjs in serverless environment
+const nodeCrypto = require('crypto');
+if (typeof globalThis.crypto === 'undefined') {
+  globalThis.crypto = nodeCrypto;
+}
+
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
